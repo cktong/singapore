@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title></title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.36.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.36.0/mapbox-gl.css' rel='stylesheet' />
+	<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+
+	<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v3.1.1/mapbox-gl-directions.js'></script>
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>  
+
+	<link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v3.1.1/mapbox-gl-directions.css' type='text/css' />
+    
+    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.1.0/mapbox-gl-geocoder.min.js'></script>
+    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.1.0/mapbox-gl-geocoder.css' type='text/css' />	
+
+    <!-- sets categories for layer_type -->
+    <script src='singapore_fire_stations.js'></script>
+    <!-- personal stylesheet -->
+    <link rel="stylesheet" type="text/css" href="singapore.css">
+</head>
+
+<body>
+	
+
+
+
+<div id='map'></div>
+<div id='coordinates' class='coordinates'></div>
+
+
+<div class = 'opening-blurb'>
+	<h1>Lighting the Way</h1>
+	<p>In 2016, Singapore reported a total of 8,277 road accidents resulting in injuries. These accidents require dispatches of law enforcement and medical personnel to ensure safety, clear the incident area, and restore the flow of traffic.</p>
+	<p>Connected streetlights add an extra dimension of communication between the street grid and the drivers on the road by communicating road events ahead, or signaling approaching vehicles. With their aid, emergency responders (ie police, fire, EMT) can quickly navigate Singapore’s street network, to improve response times and decrease congestion.</p>
+	<p>Designed by <a href="https://cktong.github.io">Christopher Tong</a></p>
+	<button class="button" onclick="fade('.opening-blurb')">Close</button>
+</div>
+ 
+<script>
+
+
+var layer_singapore = {
+				'name': 'Singapore',
+				'location': [103.814156, 1.357737],
+				'link': 'fire-stations-shp-4u10o1',
+				'zoom': 11				
+				}
+
+// see unicats.js for layer layout
+var currentlayer = layer_singapore
+var layername = currentlayer.link
+var layercenter = currentlayer.location
+
+var layer_type = "Address";
+
+var ADDRESS = {
+ 	property: 'ADDRESS',
+	type: 'exponential'
+};
+
+
+
+// var destination_point = {
+//     "type": "FeatureCollection",
+//     "features": [{
+//         "type": "Feature",
+//         "geometry": {
+//             "type": "Point",
+//             "coordinates": [103.814156, 1.357737]
+//         }
+//     }]
+// };
+
+// A simple line from origin to destination.
+var route = {
+    "type": "FeatureCollection",
+    "features": [{
+        "type": "Feature",
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [
+                [103.814156, 1.357737]
+            ]
+        }
+    }]
+};
+
+
+
+mapboxgl.accessToken = 'pk.eyJ1IjoiY2hyaXNrdG9uZyIsImEiOiJjaXZqdHNyeHIwMHR1MnRueGN3NmJrbnlrIn0.5Dw0xnjS4DNz4anyFyJRDw';
+
+var coordinates = document.getElementById('coordinates')
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/chrisktong/cj2pqrhkr004m2rmv9tg2drt5',
+    zoom: 11,
+    center: layercenter
+});
+
+
+map.addControl(new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken
+}));
+
+
+
+function fade(class_object){
+ 	$(class_object).fadeToggle(800)
+}
+
+
+// Create a popup, which I add to the map later with hover functionality
+
+var popup = new mapboxgl.Popup({
+    closeButton: false,
+    closeOnClick: false
+});
+
+// Create rounding function ussed for popups
+function round(value, decimals) {
+  return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+};
+
+function mousemove_init(layer_type) {
+	map.on("mousemove", layername, function(e) {
+	    // Change the cursor style as a UI indicator.
+	    map.getCanvas().style.cursor = 'pointer';
+
+	    // Populate the popup and set its coordinates
+	    // based on the feature found.
+		
+	    popup.setLngLat(e.features[0].geometry.coordinates)
+	        .setHTML("<b>"+ layer_type +": </b>" + e.features[0].properties.ADDRESS, 2)
+	        .addTo(map);
+
+	});
+		
+	map.on('mouseleave', layername, function() {
+	    map.getCanvas().style.cursor = '';
+	    popup.remove();
+	});
+};
+
+map.on('click', function (e) {
+
+	var coords = e.lngLat;
+
+ 	// destination_point.features[0].geometry.coordinates = [coords.lng, coords.lat];
+    // map.getSource('point').setData(destination_point);
+
+    directions.setDestination([coords.lng,coords.lat]);
+
+ 	// var features = map.queryRenderedFeatures({layers:['fire-stations-shp-4u10o1']})
+   
+    var query_point=turf.point([coords.lng,coords.lat])
+    var nearestFireStation = turf.nearest(query_point, singapore_fire_stations);
+
+ 	// var randomNumber = Math.floor(Math.random() * 20);
+
+	directions.setOrigin([nearestFireStation.geometry.coordinates[0],nearestFireStation.geometry.coordinates[1]]);
+
+	directions.on('route', function(e) {
+	 	coordinates.style.display = 'block';
+    	coordinates.innerHTML = 'Duration: ' + Math.round(e.route[0].duration/60,2) + ' minutes';
+	});
+
+    // console.log(directions)
+
+});
+
+mousemove_init(layer_type)
+
+map.on('load', function() {
+
+    // // Add a single point to the map
+    // map.addSource('point', {
+    //     "type": "geojson",
+    //     "data": destination_point
+    // });
+
+    // map.addLayer({
+    //     "id": "point",
+    //     "type": "circle",
+    //     "source": "point",
+    //     "paint": {
+    //         "circle-radius": 7,
+    //         "circle-color": "#3887be"
+    //     }
+    // });
+
+    directions.setOrigin([103.814156, 1.357737])
+});
+
+
+var directions = new MapboxDirections({
+  accessToken: mapboxgl.accessToken
+});
+
+map.addControl(directions);
+// map.addControl(new MapboxDirections({
+//     accessToken: mapboxgl.accessToken
+// }), 'top-left');
+</script>
+
+</body>
+
+<!-- <footer><a href="cktong.github.io">Copyright © 2017 Christopher Tong</a></footer> -->	
+</html>
