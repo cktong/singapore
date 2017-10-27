@@ -29,26 +29,26 @@ footer {font: 14px/16px Arial, Helvetica, sans-serif;}
     background: rgba(0,0,0,0.5);
     color: #fff;
     position: absolute;
-    top: 10px;
-    left: 40%;
+    top: 15px;
+    left: 3%;
     padding:5px 10px;
     margin: 0;
     /*font-size: 11px;*/
-    line-height: 18px;
+    line-height: 5px;
     border-radius: 3px;
     display: none;
-    font: 18px/20px Arial, Helvetica, sans-serif;
+    font: 20px/30px Arial, Helvetica, sans-serif;
 	margin: 0 auto;
 }
 
 
 .opening-blurb{
 	padding: 8px 10px;
-	font: 18px/20px Arial, Helvetica, sans-serif;
-	color: black;
-	/*background: rgba(0,0,0,0.5);*/
-	background: rgba(255,255,255,0.40);
-	box-shadow: 0 0 15px rgba(0,0,0,0.5);
+	font: 20px/30px Arial, Helvetica, sans-serif;
+	color: white;
+	background: rgba(0,0,0,0.5);
+	/*background: rgba(255,255,255,0.40);*/
+	/*box-shadow: 0 0 15px rgba(0,0,0,0.5);*/
 	border-radius: 5px;
 	position: relative;
 	top: 70px;
@@ -123,16 +123,6 @@ line-height: 20px;
 	display: none;
 }
 
-.mapbox-marker-drag-icon-step {
-    background-color:black;
-    }
-
-.mapbox-directions-origin .mapbox-form-label {
-	background-color:black;
-	border-radius:3px 0 0 0;
-	box-shadow:0 1px 0 0 rgba(0,0,0,0.1);
-	z-index:1;
-}
 
 footer {
     position: absolute;
