@@ -1,0 +1,3 @@
+<p>In 2016, Singapore reported a total of 8,277 road accidents resulting in injuries. These accidents require dispatches of law enforcement and medical personnel to ensure safety, clear the incident area, and restore the flow of traffic.</p>
+<p>Connected streetlights add an extra dimension of communication between the street grid and the drivers on the road by communicating road events ahead, or signaling approaching vehicles. With their aid, emergency responders (ie police, fire, EMT) can quickly navigate Singapore’s street network, to improve response times and decrease congestion.</p>
+<p>Designed by <a href="https://cktong.github.io">Christopher Tong</a></p>
