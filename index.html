@@ -12,6 +12,7 @@
     <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>  
 
 	<link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v3.1.1/mapbox-gl-directions.css' type='text/css' />
+    <!-- <link rel="styelsheet" type="text/css" href="mapbox_geocoder.css"> -->
     
     <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.1.0/mapbox-gl-geocoder.min.js'></script>
     <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.1.0/mapbox-gl-geocoder.css' type='text/css' />	
@@ -28,13 +29,13 @@
 
 
 <div id='map'></div>
-<div id='coordinates' class='coordinates'></div>
+<div id='coordinates' class='coordinates'>Click on a point on the map</div>
 
 
 <div class = 'opening-blurb'>
 	<h1>Lighting the Way</h1>
-	<p>In 2016, Singapore reported a total of 8,277 road accidents resulting in injuries. These accidents require dispatches of law enforcement and medical personnel to ensure safety, clear the incident area, and restore the flow of traffic.</p>
-	<p>Connected streetlights add an extra dimension of communication between the street grid and the drivers on the road by communicating road events ahead, or signaling approaching vehicles. With their aid, emergency responders (ie police, fire, EMT) can quickly navigate Singapore’s street network, to improve response times and decrease congestion.</p>
+	<p>Connected streetlights add an extra dimension of communication between the street grid and the drivers on the road. In this example, the fire station closest to the accident dispatches a vehicle. Streetlights signal the approaching emergency responders and guide them to the destination.</p>
+    <p>Find out more <a href="https://cktong.github.io/LightingTheWay.pdf">here</a></p>
 	<p>Designed by <a href="https://cktong.github.io">Christopher Tong</a></p>
 	<button class="button" onclick="fade('.opening-blurb')">Close</button>
 </div>
@@ -63,30 +64,30 @@ var ADDRESS = {
 
 
 
-// var destination_point = {
-//     "type": "FeatureCollection",
-//     "features": [{
-//         "type": "Feature",
-//         "geometry": {
-//             "type": "Point",
-//             "coordinates": [103.814156, 1.357737]
-//         }
-//     }]
-// };
-
-// A simple line from origin to destination.
-var route = {
+var destination_point = {
     "type": "FeatureCollection",
     "features": [{
         "type": "Feature",
         "geometry": {
-            "type": "LineString",
-            "coordinates": [
-                [103.814156, 1.357737]
-            ]
+            "type": "Point",
+            "coordinates": [103.814156, 1.357737]
         }
     }]
 };
+
+// A simple line from origin to destination.
+// var route = {
+//     "type": "FeatureCollection",
+//     "features": [{
+//         "type": "Feature",
+//         "geometry": {
+//             "type": "LineString",
+//             "coordinates": [
+//                 [103.814156, 1.357737]
+//             ]
+//         }
+//     }]
+// };
 
 
 
@@ -109,6 +110,7 @@ map.addControl(new MapboxGeocoder({
 
 function fade(class_object){
  	$(class_object).fadeToggle(800)
+    $("#coordinates").fadeToggle(1200)
 }
 
 
@@ -148,10 +150,8 @@ map.on('click', function (e) {
 
 	var coords = e.lngLat;
 
- 	// destination_point.features[0].geometry.coordinates = [coords.lng, coords.lat];
-    // map.getSource('point').setData(destination_point);
-
-    directions.setDestination([coords.lng,coords.lat]);
+ 	destination_point.features[0].geometry.coordinates = [coords.lng, coords.lat];
+    // directions.setDestination([coords.lng,coords.lat]);
 
  	// var features = map.queryRenderedFeatures({layers:['fire-stations-shp-4u10o1']})
    
@@ -160,46 +160,139 @@ map.on('click', function (e) {
 
  	// var randomNumber = Math.floor(Math.random() * 20);
 
-	directions.setOrigin([nearestFireStation.geometry.coordinates[0],nearestFireStation.geometry.coordinates[1]]);
+    getRoute(nearestFireStation, coords)
+    // map.getSource('point').setData(destination_point);
+	// directions.setOrigin([nearestFireStation.geometry.coordinates[0],nearestFireStation.geometry.coordinates[1]]);
 
-	directions.on('route', function(e) {
-	 	coordinates.style.display = 'block';
-    	coordinates.innerHTML = 'Duration: ' + Math.round(e.route[0].duration/60,2) + ' minutes';
-	});
+	// directions.on('route', function(e) {
+	//  	coordinates.style.display = 'block';
+ //        coordinates.innerHTML = 'Distance: ' + Math.round(e.route[0].distance/10,2)/100 + ' km <br> Duration: ' + Math.round(e.route[0].duration/60,2) + ' minutes';
+	// });
 
     // console.log(directions)
 
 });
 
+function getRoute(start,end) {
+      var start = [start.geometry.coordinates[0], start.geometry.coordinates[1]];
+      var end = [end.lng,end.lat];
+      var directionsRequest = 'https://api.mapbox.com/directions/v5/mapbox/driving/' + start[0] + ',' + start[1] + ';' + end[0] + ',' + end[1] + '?geometries=geojson&access_token=' + mapboxgl.accessToken;
+      $.ajax({
+        method: 'GET',
+        url: directionsRequest,
+      }).done(function(data) {
+        var route = data.routes[0].geometry;
+        var coord = route.coordinates;
+        var last =route.coordinates.slice(-1)[0]
+        var full_route = route
+
+        map.getSource('route_background').setData(full_route);
+
+        route.coordinates = [coord[0]];
+
+        map.getSource('route').setData(route);
+        last_point= turf.point([last[0],last[1]])
+        map.getSource('point').setData(last_point);
+
+                // on a regular basis, add more coordinates from the saved list and update the map
+        var i = 0;
+        var light_length = 7
+        var timer = window.setInterval(function() {
+            if (i < coord.length) {
+                route.coordinates.push(coord[i]);
+                if (light_length < route.coordinates.length){
+                    route.coordinates = route.coordinates.slice(-1*light_length)
+                }
+                // console.log(coord[i])
+                map.getSource('route').setData(route);
+                // last_point= turf.point([coord[i][0],coord[i][1]])
+                // map.getSource('point').setData(last_point);
+                // map.panTo(coordinates[i]);
+                i++;
+            } else {
+                window.clearInterval(timer);
+            }
+        }, 30);
+
+
+        // map.getSource('route').setData(data.routes[0].geometry)
+
+        coordinates.style.display = 'block';
+        coordinates.innerHTML = 'Distance: ' + Math.round(data.routes[0].distance/10,2)/100 + ' km <br> Duration: ' + Math.round(data.routes[0].duration/60,2) + ' minutes';
+        });
+        // this is where the code from the next step will go
+}
+
 mousemove_init(layer_type)
 
 map.on('load', function() {
 
-    // // Add a single point to the map
-    // map.addSource('point', {
-    //     "type": "geojson",
-    //     "data": destination_point
-    // });
+    // Add a single point to the map
+    map.addSource('point', {
+        "type": "geojson",
+        "data": destination_point
+    });
 
-    // map.addLayer({
-    //     "id": "point",
-    //     "type": "circle",
-    //     "source": "point",
-    //     "paint": {
-    //         "circle-radius": 7,
-    //         "circle-color": "#3887be"
-    //     }
-    // });
+    map.addSource('route', {
+        "type": "geojson",
+        "data": destination_point
+    });
 
-    directions.setOrigin([103.814156, 1.357737])
+    map.addSource('route_background', {
+        "type": "geojson",
+        "data": destination_point
+    });
+
+
+    map.addLayer({
+        "id": "point",
+        "type": "circle",
+        "source": "point",
+        "paint": {
+            "circle-radius": 4,
+            // "circle-color": '#2f2f2f',
+            "circle-color": 'white',
+            "circle-stroke-color": "black",
+            "circle-stroke-width": 2
+        }
+    });
+
+    map.addLayer({
+        "id": "route",
+        "type": "line",
+        "source": "route",
+        "paint": {
+            "line-width": 5 ,
+            "line-color":"#FF4C4C",
+            "line-opacity": .8,
+            "line-dasharray": [1, 1]
+        }
+    });
+
+    map.addLayer({
+        "id": "route_background",
+        "type": "line",
+        "source": "route_background",
+        "paint": {
+            "line-width": 1 ,
+            "line-color":"black",
+            "line-opacity": .4,
+        }
+    });
+
+
+
+
+    // directions.setOrigin([103.814156, 1.357737])
 });
 
 
-var directions = new MapboxDirections({
-  accessToken: mapboxgl.accessToken
-});
+// var directions = new MapboxDirections({
+//   unit: 'metric',    
+//   accessToken: mapboxgl.accessToken
+// });
 
-map.addControl(directions);
+// map.addControl(directions);
 // map.addControl(new MapboxDirections({
 //     accessToken: mapboxgl.accessToken
 // }), 'top-left');
