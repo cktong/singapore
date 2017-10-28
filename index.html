@@ -15,7 +15,7 @@
     <!-- <link rel="styelsheet" type="text/css" href="mapbox_geocoder.css"> -->
     
     <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.1.0/mapbox-gl-geocoder.min.js'></script>
-    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.1.0/mapbox-gl-geocoder.css' type='text/css' />	
+<!--     <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.1.0/mapbox-gl-geocoder.css' type='text/css' />	 -->
 
     <!-- sets categories for layer_type -->
     <script src='singapore_fire_stations.js'></script>
@@ -62,34 +62,16 @@ var ADDRESS = {
 	type: 'exponential'
 };
 
-
-
 var destination_point = {
     "type": "FeatureCollection",
     "features": [{
         "type": "Feature",
         "geometry": {
             "type": "Point",
-            "coordinates": [103.814156, 1.357737]
+            "coordinates": layercenter
         }
     }]
 };
-
-// A simple line from origin to destination.
-// var route = {
-//     "type": "FeatureCollection",
-//     "features": [{
-//         "type": "Feature",
-//         "geometry": {
-//             "type": "LineString",
-//             "coordinates": [
-//                 [103.814156, 1.357737]
-//             ]
-//         }
-//     }]
-// };
-
-
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiY2hyaXNrdG9uZyIsImEiOiJjaXZqdHNyeHIwMHR1MnRueGN3NmJrbnlrIn0.5Dw0xnjS4DNz4anyFyJRDw';
 
@@ -120,11 +102,6 @@ var popup = new mapboxgl.Popup({
     closeButton: false,
     closeOnClick: false
 });
-
-// Create rounding function ussed for popups
-function round(value, decimals) {
-  return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
-};
 
 function mousemove_init(layer_type) {
 	map.on("mousemove", layername, function(e) {
@@ -190,11 +167,10 @@ function getRoute(start,end) {
 
         route.coordinates = [coord[0]];
 
-        map.getSource('route').setData(route);
         last_point= turf.point([last[0],last[1]])
         map.getSource('point').setData(last_point);
 
-                // on a regular basis, add more coordinates from the saved list and update the map
+        // on a regular basis, add more coordinates from the saved list and update the map
         var i = 0;
         var light_length = 7
         var timer = window.setInterval(function() {
@@ -220,7 +196,6 @@ function getRoute(start,end) {
         coordinates.style.display = 'block';
         coordinates.innerHTML = 'Distance: ' + Math.round(data.routes[0].distance/10,2)/100 + ' km <br> Duration: ' + Math.round(data.routes[0].duration/60,2) + ' minutes';
         });
-        // this is where the code from the next step will go
 }
 
 mousemove_init(layer_type)
